@@ -39,9 +39,17 @@ Mancante: un clip di **TREPI** (*Treponema denticola*) — è nel cast ma non fo
 - [ ] **End card** con CTA + brand reali (+ eventuale cast image come sfondo).
 - [ ] Conferma ordine / take; eventuale inserimento clip non usate o di TREPI.
 
+## Changelog
+
+- **v1** (`build_v1.py`) — cut base: cold open, cover-crop reframing, lower-third
+  statici, voci loudnorm, end card placeholder.
+- **v1.5** (`build_v15.py`) — polish montaggio (nessun input nuovo): lower-third
+  **animati** (slide-in da sinistra), apertura in dissolvenza dal nero, titolo in
+  fade-in, vignettatura per coesione, end card in fade-in. Stesso cut e durata.
+
 ## Rebuild
 
 ```bash
-python3 videos/microbioma-orale/build/build_v1.py
-# output -> videos/microbioma-orale/out/microbioma-orale-v1.mp4
+python3 videos/microbioma-orale/build/build_v1.py    # cut base   -> out/microbioma-orale-v1.mp4
+python3 videos/microbioma-orale/build/build_v15.py   # rifinito   -> out/microbioma-orale-v1_5.mp4
 ```
