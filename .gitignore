@@ -24,6 +24,10 @@
 node_modules/
 .pnpm-store/
 
+# Python virtualenv (created by README step 3 for the TTS deps — never commit)
+.venv/
+venv/
+
 # Build / output
 dist/
 build/
