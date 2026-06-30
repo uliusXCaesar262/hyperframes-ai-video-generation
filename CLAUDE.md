@@ -57,6 +57,7 @@ Runtime deps: Node ≥18, pnpm, Python ≥3.10 with `pip install edge-tts`, ffmp
 
 Loaded into every session. The playbook follows them strictly when editing `index.html`. Critical ones:
 - `shorts-typography.md` — min font sizes for 1080×1920
+- `reel-format-9-16.md` — 9:16 (1080×1920) is the default AND fallback for every reel; cover-crop non-9:16 sources, never letterbox/stretch
 - `visual-pacing-5s.md` — never static more than 5s
 - `step-by-step-reveal.md` — enumerated lists reveal one beat at a time; use `tl.set()` + `tl.to()`, never `tl.from()` (visibility leak)
 - `tts-pronunciation.md` — heteronym audit before generating narration

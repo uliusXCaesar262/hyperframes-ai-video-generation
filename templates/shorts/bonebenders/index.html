@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<title>Bonebenders Shorts Template — Demo</title>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+<style>
+  /* ──────────────────────────────────────────────────
+     CANVAS — 1080x1920 dark clinical stage. Full design
+     system in DESIGN.md. Edit values per video; keep families.
+     Palette is the Bonebenders DARK-mode token set (slate-950
+     canvas, sky accent), derived from colors_and_type.css of
+     the Bonebenders Design System handoff.
+       - Mood: "Minimal Freddo" — cool grays, one bright accent.
+       - Type: Playfair Display (serif display) + Inter (UI/body).
+     ────────────────────────────────────────────────── */
+
+  /* ---- Self-hosted brand fonts (woff2 from the design system) ---- */
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('assets/fonts/inter-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('assets/fonts/inter-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 600 700;
+    font-display: swap;
+    src: url('assets/fonts/playfair-display-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Playfair Display';
+    font-style: normal;
+    font-weight: 600 700;
+    font-display: swap;
+    src: url('assets/fonts/playfair-display-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+    background: #020617;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: #f8fafc;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ──────────────────────────────────────────────────
+     ROOT TOKENS — colors, spacing, type scale.
+     Override per video by changing these CSS vars.
+     Values are the Bonebenders dark-mode tokens (slate +
+     sky). The brand accent pivoted emerald → sky; the
+     canonical hex are Tailwind `sky`. See DESIGN.md.
+     ────────────────────────────────────────────────── */
+  #root {
+    --bg:          #020617;   /* slate-950 — dark-mode page canvas */
+    --surface:     #0f172a;   /* slate-900 — cards / panels */
+    --card:        #1e293b;   /* slate-800 — elevated surface */
+    --fg:          #f8fafc;   /* slate-50  — headings, primary text */
+    --fg-body:     #cbd5e1;   /* slate-300 — body copy on dark */
+    --fg-dim:      #94a3b8;   /* slate-400 — captions, meta (4.5:1+) */
+    --sky:         #38bdf8;   /* sky-400 — dark-mode accent (bright) */
+    --sky-500:     #0ea5e9;   /* sky-500 — mid accent */
+    --sky-600:     #0284c7;   /* sky-600 — solid fills only (>=24px) */
+    --wa:          #22c55e;   /* green-500 — WhatsApp booking CTA only */
+    --pill-bg:     rgba(248, 250, 252, 0.05);
+    --pill-border: rgba(248, 250, 252, 0.14);
+    --hairline:    rgba(248, 250, 252, 0.10);
+
+    --pad-top:    240px;
+    --pad-x:      72px;
+    --pad-bottom: 220px;
+
+    /* Font stacks are written LITERALLY in each font-family below (not via
+       var()) so the HyperFrames StaticGuard can resolve them to the @font-face
+       declarations above. Keep these two lines as the canonical reference. */
+    /* --sans:    'Inter', system-ui, sans-serif; */
+    /* --display: 'Playfair Display', ui-serif, Georgia, serif; */
+  }
+
+  /* Ambient — single sky radial drift. The brand is mono-accent
+     ("one loud element"); no second hue. ~9% alpha, sine yoyo. */
+  #ambient {
+    position: absolute;
+    inset: -200px;
+    background:
+      radial-gradient(circle at 28% 22%, rgba(56, 189, 248, 0.10), transparent 58%),
+      radial-gradient(circle at 78% 86%, rgba(14, 165, 233, 0.06), transparent 55%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Film-grain overlay — fractal noise to break H.264 banding on the
+     near-black canvas. Top of the stack, blended over everything. */
+  #noise-overlay {
+    position: absolute;
+    inset: 0;
+    width: 1080px;
+    height: 1920px;
+    pointer-events: none;
+    z-index: 11;
+    opacity: 0.03;
+    mix-blend-mode: overlay;
+  }
+
+  /* ──────────────────────────────────────────────────
+     TOP CHROME — persistent brand banner across all phases.
+     Bonebenders ships a single white wordmark+icon lockup
+     (crossed bones + fist + "Bonebenders") on transparent —
+     one <img>, no CSS wordmark needed.
+     ────────────────────────────────────────────────── */
+  #top-banner {
+    position: absolute;
+    top: 72px;
+    left: 0;
+    width: 1080px;
+    z-index: 10;
+    pointer-events: none;
+    filter: drop-shadow(0 4px 14px rgba(0,0,0,0.55));
+    text-align: center;
+  }
+  #top-banner-logo {
+    width: 560px;
+    height: auto;
+    object-fit: contain;
+    display: inline-block;
+    opacity: 0.96;
+  }
+
+  /* Slim progress bar — bottom edge, sky accent */
+  #progress-track {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 1080px;
+    height: 6px;
+    background: rgba(248, 250, 252, 0.06);
+    z-index: 10;
+  }
+  #progress-fill {
+    width: 0;
+    height: 100%;
+    background: var(--sky);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.6);
+  }
+
+  /* ──────────────────────────────────────────────────
+     PHASES — full-bleed, layered. Phase 1 visible by
+     default; phases 2-4 start at opacity 0. Crossfades
+     between phases handle scene change (no exits on
+     individual elements — see DESIGN.md motion rules).
+     ────────────────────────────────────────────────── */
+  .phase {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1080px;
+    height: 1920px;
+    overflow: hidden;
+  }
+  #phase1 { z-index: 1; opacity: 1; }
+  #phase2 { z-index: 2; opacity: 0; }
+  #phase3 { z-index: 3; opacity: 0; }
+  #phase4 { z-index: 4; opacity: 0; }
+
+  .phase-content {
+    width: 100%;
+    height: 100%;
+    padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+  }
+
+  /* Inter overline — every phase opens with one of these.
+     UPPERCASE, letter-spaced, sky or dim. Sentence-case brand
+     elsewhere, but the overline is a chrome label, not copy. */
+  .overline {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 36px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+  }
+
+  /* ──────────────────────────────────────────────────
+     PHASE 1 — HERO SLAM
+     Pattern: overline → pre-line → serif slam word + caption pill.
+     The hero uses Playfair Display (the brand signature is serif
+     headlines). Solid sky — NO gradient text fill (brand forbids
+     decorative gradients).
+     ────────────────────────────────────────────────── */
+  #phase1 .phase-content {
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: 26px;
+  }
+  #p1-overline { color: var(--sky); }
+  #p1-pre {
+    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-weight: 700;
+    font-size: 70px;
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    max-width: 900px;
+  }
+  #p1-hero {
+    /* Tune size to your slam word: 180px fits ~8 chars (e.g. RIGENERA).
+       Longer Italian clinical words (9-11 chars) drop to 140-160px.
+       The inspect step flags overflow if you push it. */
+    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-weight: 700;
+    font-size: 180px;
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    color: var(--sky);
+    text-shadow: 0 0 70px rgba(56, 189, 248, 0.38), 0 8px 24px rgba(0,0,0,0.6);
+    max-width: 940px;
+  }
+  #p1-caption {
+    margin-top: 30px;
+    padding: 14px 30px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 34px;
+    letter-spacing: 0.5px;
+    color: var(--fg-body);
+    background: var(--pill-bg);
+    border: 1.5px solid var(--pill-border);
+    border-radius: 999px;
+  }
+
+  /* ──────────────────────────────────────────────────
+     PHASE 2 — STAT PILL ROW
+     Pattern: overline → headline → 2 stat pills.
+     Mono-accent: pill 1 outlined-sky, pill 2 solid-sky (inverted).
+     Variety comes from treatment, not from a second hue.
+     ────────────────────────────────────────────────── */
+  #phase2 .phase-content {
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: 34px;
+  }
+  #p2-overline { color: var(--sky); }
+  #p2-headline {
+    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-weight: 700;
+    font-size: 62px;
+    line-height: 1.08;
+    color: var(--fg);
+    max-width: 900px;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  #p2-pills {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+  }
+  .stat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 452px;
+    min-height: 300px;
+    padding: 44px 24px;
+    border-radius: 28px;
+  }
+  /* Outlined-sky pill — sky digit on a faint sky-tinted surface */
+  .stat-pill.outline {
+    background: linear-gradient(160deg, rgba(56,189,248,0.12), rgba(56,189,248,0.03));
+    border: 2px solid rgba(56,189,248,0.40);
+    box-shadow: 0 16px 40px rgba(2,6,23,0.6);
+  }
+  .stat-pill.outline .stat-num   { color: var(--sky); text-shadow: 0 0 56px rgba(56,189,248,0.40); }
+  .stat-pill.outline .stat-label { color: var(--fg-body); }
+  /* Solid-sky pill — slate-950 digit on a filled sky block (the loud one) */
+  .stat-pill.solid {
+    background: linear-gradient(160deg, var(--sky), var(--sky-600));
+    border: 2px solid var(--sky);
+    box-shadow: 0 16px 44px rgba(56,189,248,0.30);
+  }
+  .stat-pill.solid .stat-num   { color: #020617; }
+  .stat-pill.solid .stat-label { color: rgba(2,6,23,0.78); }
+  /* allow-overlap silences the stat-num glow bbox false-positive vs its label */
+  .stat-num {
+    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-weight: 700;
+    font-size: 156px;
+    line-height: 0.9;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .stat-label {
+    margin-top: 12px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 30px;
+    letter-spacing: 0.5px;
+    text-align: center;
+    max-width: 360px;
+  }
+
+  /* ──────────────────────────────────────────────────
+     PHASE 3 — SERVICE / METHOD CARDS
+     Pattern: overline → 3 labeled cards, mono-sky.
+     For Bonebenders each card is a service area or protocol.
+     ────────────────────────────────────────────────── */
+  #phase3 .phase-content {
+    align-items: center;
+    justify-content: flex-start;
+    text-align: center;
+    gap: 34px;
+  }
+  #p3-overline { color: var(--fg-dim); }
+  .card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    width: 936px;
+  }
+  .svc-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 26px;
+    padding: 26px 30px;
+    border-radius: 22px;
+    background: linear-gradient(160deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92));
+    border: 1.5px solid var(--hairline);
+    box-shadow: 0 12px 30px rgba(2,6,23,0.5);
+  }
+  /* Sky left-edge accent stripe via an inset box-shadow on the index chip */
+  .svc-index {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    background: rgba(56,189,248,0.14);
+    border: 1.5px solid rgba(56,189,248,0.40);
+    color: var(--sky);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .svc-body { display: flex; flex-direction: column; gap: 6px; flex: 1; text-align: left; }
+  .svc-title {
+    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-weight: 700;
+    font-size: 46px;
+    line-height: 1.08;
+    color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+  .svc-sub {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 30px;
+    line-height: 1.25;
+    color: var(--fg-dim);
+  }
+
+  /* ──────────────────────────────────────────────────
+     PHASE 4 — CTA / BOOKING (thumbnail-grade final frame)
+     Pattern: topic slam → outcome line → WhatsApp booking pill.
+     The persistent top banner supplies brand chrome. WhatsApp
+     green is the ONLY non-sky accent, reserved for the booking CTA
+     (the clinic books via WhatsApp). Satisfies
+     .claude/rules/shorts-thumbnail-final-frame.md.
+     ────────────────────────────────────────────────── */
+  #phase4 .phase-content {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 30px;
+  }
+  #p4-overline { color: var(--sky); }
+  #p4-topic {
+    font-family: 'Playfair Display', ui-serif, Georgia, serif;
+    font-weight: 700;
+    font-size: 150px;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+    text-shadow: 0 8px 28px rgba(0,0,0,0.55);
+    max-width: 940px;
+  }
+  #p4-outcome {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 48px;
+    line-height: 1.25;
+    color: var(--fg-dim);
+    max-width: 860px;
+  }
+  #p4-cta {
+    margin-top: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    padding: 22px 44px;
+    border-radius: 999px;
+    background: var(--wa);
+    color: #02140a;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 700;
+    font-size: 46px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 14px 36px rgba(34,197,94,0.30);
+  }
+  #p4-cta .arrow {
+    font-weight: 400;
+    font-size: 52px;
+    line-height: 0.7;
+  }
+</style>
+</head>
+<body>
+<div id="root"
+     data-composition-id="main"
+     data-start="0"
+     data-duration="24"
+     data-width="1080"
+     data-height="1920">
+
+  <!-- Ambient sky radial wash (mono-hue — brand is single-accent) -->
+  <div id="ambient"></div>
+
+  <!-- Persistent top banner: white Bonebenders lockup on transparent.
+       Single <img> — the brand logo is a full icon+wordmark lockup. -->
+  <div id="top-banner">
+    <img id="top-banner-logo" src="assets/logo-bonebenders-transparent.png" alt="Bonebenders" />
+  </div>
+
+  <!-- Slim progress bar -->
+  <div id="progress-track"><div id="progress-fill"></div></div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE 1 — HERO SLAM (0-6s)
+       Serif slam (Playfair), solid sky. No gradient fill.
+       ═══════════════════════════════════════════════════════ -->
+  <div id="phase1" class="phase">
+    <div class="phase-content">
+      <div class="overline" id="p1-overline">Chirurgia rigenerativa</div>
+      <div id="p1-pre">L'osso guarisce.</div>
+      <!-- allow-overlap: the hero's 70px text-shadow glow bbox reaches into the
+           pre-line's box. Visually well-separated — this silences the glow
+           false-positive in `hyperframes inspect`. -->
+      <div id="p1-hero" data-layout-allow-overlap>RIGENERA</div>
+      <div id="p1-caption">Evidence-based. Non promesse.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE 2 — STAT PILL ROW (6-12s)
+       Outlined-sky + solid-sky pills (mono-hue, varied treatment).
+       ═══════════════════════════════════════════════════════ -->
+  <div id="phase2" class="phase">
+    <div class="phase-content">
+      <div class="overline" id="p2-overline">Perché fidarsi</div>
+      <div id="p2-headline">Clinica, non pubblicità.</div>
+      <div id="p2-pills">
+        <div class="stat-pill outline" id="p2-pill-1">
+          <div class="stat-num" data-layout-allow-overlap>30+</div>
+          <div class="stat-label">anni in chirurgia orale</div>
+        </div>
+        <div class="stat-pill solid" id="p2-pill-2">
+          <div class="stat-num" data-layout-allow-overlap>4</div>
+          <div class="stat-label">aree di specializzazione</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE 3 — SERVICE CARDS (12-18s)
+       Mono-sky cards — service areas / protocols.
+       ═══════════════════════════════════════════════════════ -->
+  <div id="phase3" class="phase">
+    <div class="phase-content">
+      <div class="overline" id="p3-overline">Di cosa mi occupo</div>
+      <div class="card-list">
+        <div class="svc-card" id="p3-card-1">
+          <div class="svc-index">01</div>
+          <div class="svc-body">
+            <div class="svc-title">Parodontologia</div>
+            <div class="svc-sub">Rigenerazione del tessuto di sostegno</div>
+          </div>
+        </div>
+        <div class="svc-card" id="p3-card-2">
+          <div class="svc-index">02</div>
+          <div class="svc-body">
+            <div class="svc-title">Implantologia</div>
+            <div class="svc-sub">Stabilità primaria, osteointegrazione</div>
+          </div>
+        </div>
+        <div class="svc-card" id="p3-card-3">
+          <div class="svc-index">03</div>
+          <div class="svc-body">
+            <div class="svc-title">Chirurgia orale</div>
+            <div class="svc-sub">Rialzo del seno, innesti, G B R</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PHASE 4 — CTA / BOOKING (18-24s) — thumbnail-grade hold
+       Topic slam + outcome + WhatsApp booking pill. Brand chrome
+       from the persistent banner. WhatsApp green = booking only.
+       ═══════════════════════════════════════════════════════ -->
+  <div id="phase4" class="phase">
+    <div class="phase-content">
+      <div class="overline" id="p4-overline">Studio Denti Più · Frosinone</div>
+      <div id="p4-topic">Scrivimi.</div>
+      <div id="p4-outcome">Rispondo io, personalmente.</div>
+      <div id="p4-cta">WhatsApp 0775 889009 <span class="arrow">&rarr;</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       NARRATION + SFX
+       Rules:        .claude/rules/audio-design.md
+       Cue catalog:  shared/audio/MANIFEST.md
+       Default for this template (like the Anthropic family):
+         cinematic-whoosh on phase transitions ONLY — no
+         per-element slams. The clinical brand reads calm;
+         percussive SFX cheapen it. Opt in for one deliberate beat.
+       Sync into a video (after you copy this template):
+         bash scripts/sync-video-sfx.sh videos/<slug> cinematic-whoosh
+       ═══════════════════════════════════════════════════════ -->
+
+  <!--
+  Narration — single track, replaces this comment in real videos.
+
+    audio id="narration"
+           class="clip"
+           src="audio/narration.wav"
+           data-start="0"
+           data-duration="0"
+           data-track-index="2"
+           data-volume="1"
+
+  Transition whoosh — fire at each phase-swap moment (T1/T2/T3).
+  data-duration MUST be 1.5s to expose the full decay tail
+  (see .claude/rules/audio-design.md). data-volume 0.11 per cue table.
+
+    audio id="sfx-whoosh-t1"
+           class="clip"
+           src="assets/sfx/cinematic-whoosh.mp3"
+           data-start="5.6"
+           data-duration="1.5"
+           data-track-index="3"
+           data-volume="0.11"
+  -->
+
+  <!-- Film-grain overlay — last child so it sits on top and tints everything -->
+  <svg id="noise-overlay" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="noise-filter" x="0%" y="0%" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="4" seed="42" stitchTiles="stitch" result="noise" />
+        <feColorMatrix type="saturate" values="0" in="noise" result="monoNoise" />
+      </filter>
+    </defs>
+    <rect width="100%" height="100%" filter="url(#noise-filter)" fill="white" />
+  </svg>
+</div>
+
+<script>
+  window.__timelines = window.__timelines || {};
+  const tl = gsap.timeline({ paused: true });
+
+  // ─────────────────────────────────────────────────────
+  // Ambient: slow sky breath across full duration (calm)
+  // ─────────────────────────────────────────────────────
+  tl.fromTo("#ambient",
+    { opacity: 0.85, scale: 1.0 },
+    { opacity: 1.0, scale: 1.035, duration: 12, ease: "sine.inOut", yoyo: true, repeat: 1 },
+    0);
+
+  // Progress bar fills linearly across the composition (24s total)
+  tl.fromTo("#progress-fill",
+    { width: 0 },
+    { width: 1080, duration: 24, ease: "none" },
+    0);
+
+  // Top banner fade-in (one-shot, then static)
+  tl.from("#top-banner", { y: -18, opacity: 0, duration: 0.7, ease: "power2.out" }, 0.2);
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 1 — Hero slam (0-6s) : entrances only
+  // Calm easing — no inline shake (brand is publication-grade calm).
+  // ═══════════════════════════════════════════════════════
+  tl.from("#p1-overline", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, 0.4);
+  tl.from("#p1-pre",      { y: 30, opacity: 0, duration: 0.6, ease: "power3.out" }, 0.85);
+  tl.from("#p1-hero",     { y: 40, scale: 0.92, opacity: 0, duration: 0.85, ease: "power3.out" }, 1.4);
+  tl.from("#p1-caption",  { y: 22, opacity: 0, duration: 0.5, ease: "power2.out" }, 2.3);
+
+  // ─── Transition phase1 → phase2 at 5.6s : blur + crossfade ───
+  const T1 = 5.6;
+  tl.to("#phase1", { filter: "blur(20px)", scale: 1.035, duration: 0.5, ease: "power1.in" }, T1);
+  tl.to("#phase1", { opacity: 0,                           duration: 0.4, ease: "power1.in" }, T1 + 0.3);
+  tl.set("#phase1", { visibility: "hidden" }, T1 + 0.7);
+  tl.set("#phase2", { filter: "blur(20px)", scale: 0.975, opacity: 0, visibility: "visible" }, T1 + 0.4);
+  tl.to("#phase2", { opacity: 1,                          duration: 0.3, ease: "power1.inOut", overwrite: "auto" }, T1 + 0.4);
+  tl.to("#phase2", { filter: "blur(0px)", scale: 1,       duration: 0.5, ease: "power1.out",   overwrite: "auto" }, T1 + 0.6);
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 2 — Stat pill row (6-12s) : entrances only
+  // ═══════════════════════════════════════════════════════
+  const P2 = 6.4;
+  tl.from("#p2-overline", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, P2 + 0.0);
+  tl.from("#p2-headline", { y: 30, opacity: 0, duration: 0.6, ease: "power3.out" }, P2 + 0.3);
+  tl.from("#p2-pill-1",   { y: 30, scale: 0.9, opacity: 0, duration: 0.6, ease: "back.out(1.4)" }, P2 + 0.95);
+  tl.from("#p2-pill-2",   { y: 30, scale: 0.9, opacity: 0, duration: 0.6, ease: "back.out(1.4)" }, P2 + 1.45);
+
+  // ─── Transition phase2 → phase3 at 11.6s ───
+  const T2 = 11.6;
+  tl.to("#phase2", { filter: "blur(20px)", scale: 1.035, duration: 0.5, ease: "power1.in" }, T2);
+  tl.to("#phase2", { opacity: 0,                           duration: 0.4, ease: "power1.in" }, T2 + 0.3);
+  tl.set("#phase2", { visibility: "hidden" }, T2 + 0.7);
+  tl.set("#phase3", { filter: "blur(20px)", scale: 0.975, opacity: 0, visibility: "visible" }, T2 + 0.4);
+  tl.to("#phase3", { opacity: 1,                          duration: 0.3, ease: "power1.inOut", overwrite: "auto" }, T2 + 0.4);
+  tl.to("#phase3", { filter: "blur(0px)", scale: 1,       duration: 0.5, ease: "power1.out",   overwrite: "auto" }, T2 + 0.6);
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 3 — Service cards (12-18s) : entrances only
+  // Step-by-step reveal — each card enters on its own beat.
+  // ═══════════════════════════════════════════════════════
+  const P3 = 12.4;
+  tl.from("#p3-overline", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, P3 + 0.0);
+  tl.from("#p3-card-1",   { x: -36, opacity: 0, duration: 0.55, ease: "power3.out" }, P3 + 0.5);
+  tl.from("#p3-card-2",   { x: -36, opacity: 0, duration: 0.55, ease: "power3.out" }, P3 + 1.4);
+  tl.from("#p3-card-3",   { x: -36, opacity: 0, duration: 0.55, ease: "power3.out" }, P3 + 2.3);
+
+  // ─── Transition phase3 → phase4 at 17.6s ───
+  const T3 = 17.6;
+  tl.to("#phase3", { filter: "blur(20px)", scale: 1.035, duration: 0.5, ease: "power1.in" }, T3);
+  tl.to("#phase3", { opacity: 0,                           duration: 0.4, ease: "power1.in" }, T3 + 0.3);
+  tl.set("#phase3", { visibility: "hidden" }, T3 + 0.7);
+  tl.set("#phase4", { filter: "blur(20px)", scale: 0.975, opacity: 0, visibility: "visible" }, T3 + 0.4);
+  tl.to("#phase4", { opacity: 1,                          duration: 0.3, ease: "power1.inOut", overwrite: "auto" }, T3 + 0.4);
+  tl.to("#phase4", { filter: "blur(0px)", scale: 1,       duration: 0.5, ease: "power1.out",   overwrite: "auto" }, T3 + 0.6);
+
+  // ═══════════════════════════════════════════════════════
+  // PHASE 4 — CTA / booking (18-24s) : entrances only, then hold.
+  // All motion finishes by ~20.5s, leaving >1.5s static hold for
+  // the thumbnail-grade final frame.
+  // ═══════════════════════════════════════════════════════
+  const P4 = 18.4;
+  tl.from("#p4-overline", { y: 20, opacity: 0, duration: 0.5, ease: "power2.out" }, P4 + 0.0);
+  tl.from("#p4-topic",    { y: 40, scale: 0.94, opacity: 0, duration: 0.7, ease: "power3.out" }, P4 + 0.4);
+  tl.from("#p4-outcome",  { y: 22, opacity: 0, duration: 0.5, ease: "power2.out" }, P4 + 1.1);
+  tl.from("#p4-cta",      { y: 24, scale: 0.92, opacity: 0, duration: 0.55, ease: "back.out(1.4)" }, P4 + 1.6);
+
+  // Phase 4 holds fully static from ~20.5s to 24s — thumbnail frame.
+
+  window.__timelines["main"] = tl;
+</script>
+</body>
+</html>
