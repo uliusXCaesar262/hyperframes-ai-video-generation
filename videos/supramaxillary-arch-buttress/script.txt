@@ -1,0 +1,14 @@
+<!-- TTS pronunciation overrides — anatomical landmarks for Italian edge-tts
+     - PNR: "P N R" then expansion "recesso palato-nasale"
+     - ANS: "A N S" then expansion "spina nasale anteriore"
+     - BCB: "B C B" then expansion "base del buttress canino"
+     - SUPRAMAXILLARY: keep as cognate; edge-tts it-IT handles it
+     - Slam visual word is ARCO (spoken as ARCO in phase 1)
+-->
+Nel midface c'è un arco di forza. <break time="0.35s"/> Si chiama arco SUPRAMAXILLARY. <break time="0.4s"/>
+
+Tre landmark lungo l'arco. <break time="0.35s"/> Tre punti. Un solo percorso di carico. <break time="0.4s"/>
+
+P N R: recesso palato-nasale. <break time="0.45s"/> B C B: base del buttress canino. <break time="0.45s"/> A N S: spina nasale anteriore. <break time="0.4s"/>
+
+Salva il reel. <break time="0.35s"/> Anatomia maxillo, chiara e veloce.
