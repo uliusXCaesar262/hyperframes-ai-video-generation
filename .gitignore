@@ -34,6 +34,10 @@ out/
 __pycache__/
 *.pyc
 
+# Python virtualenv (dev TTS deps — see README / AGENTS.md)
+.venv/
+venv/
+
 # HyperFrames render artefacts and caches
 **/.waveform-cache/
 **/out/
