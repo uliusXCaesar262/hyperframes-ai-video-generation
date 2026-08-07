@@ -32,9 +32,11 @@ archon workflow status                # list active runs + working_path
 archon isolation list                 # list worktrees
 ```
 
-Required env in `.archon/.env` (or `~/.archon/.env`): `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`. ElevenLabs is optional — default voice is edge-tts `en-US-AndrewNeural`.
+Required env in `.archon/.env` (copy from `.env.example`): `CLAUDE_USE_GLOBAL_AUTH=true` after `claude /login` (Claude Pro/Max subscription OAuth). Do **not** set `ANTHROPIC_API_KEY`. Default TTS is Kokoro (`KOKORO_*` vars in `.env.example`); ElevenLabs is optional if `ELEVENLABS_API_KEY` is set.
 
-Runtime deps: Node ≥18, pnpm, Python ≥3.10 with `pip install edge-tts`, ffmpeg, jq, bun.
+Runtime deps: Node ≥18, pnpm, Python ≥3.10 with `pip install kokoro soundfile numpy`, system `espeak-ng`, ffmpeg, jq, bun.
+
+**Cursor-only fallback (no Claude Code / Archon):** skip `archon workflow run`; in Cursor chat follow `.claude/skills/diy-yt-creator/new-*-short.md` and run `python scripts/kokoro-tts.py videos/<slug> --shorts` yourself. Same artifacts under `videos/<slug>/`.
 
 ## Architecture
 
@@ -74,10 +76,10 @@ videos/<slug>/
 ├── DESIGN.md, README.md    ← per-video design + spawn notes
 ├── script.txt              ← narration source
 ├── audio/
-│   ├── narration.wav       ← edge-tts output
+│   ├── narration.wav       ← Kokoro TTS output (default; ElevenLabs optional)
 │   ├── narration.mp3       ← compressed copy
-│   └── narration-chunks/   ← per-sentence intermediates (gitignored)
-├── transcript.json         ← word-level timestamps from edge-tts (may be empty if service degrades)
+│   └── narration-chunks/   ← per-sentence intermediates (gitignored; ElevenLabs chunked mode)
+├── transcript.json         ← word-level timestamps from Kokoro / ElevenLabs
 ├── compositions/           ← sub-compositions (rare for shorts; phase mutex lives in index.html)
 ├── assets/
 │   ├── archon-logo.png
@@ -88,8 +90,8 @@ videos/<slug>/
 ## Gotchas
 
 - **Bun on Windows truncates `bun -e <script>` at the first newline** when spawned via Node's `execFile` (Archon's mechanism — only line 1 runs, every later statement is silently dropped, exit code is still 0). The `parse-input` node uses a `bash:` wrapper that `mktemp`s a `.js` file and runs `bun --no-env-file run "$TMP" "$ARGUMENTS"` instead. Don't switch back to `script: runtime: bun` for multi-line bodies on Windows.
-- **`edge-tts` WordBoundary events sometimes return 0** (service-side, all voices). The playbook falls back to character-proportion estimates, which can be ±1s off. Re-time the composition when service recovers, or switch to ElevenLabs (`scripts/elevenlabs-tts.py` + `tts_lib.py` are available in the source repo if you need to port).
-- **Multilingual edge-tts voices are forbidden** — `en-US-AndrewMultilingualNeural` and `en-US-BrianMultilingualNeural` emit empty WordBoundary arrays unconditionally. Stick to `AndrewNeural`, `BrianNeural`, `GuyNeural`.
+- **Kokoro first run downloads ~325MB** from Hugging Face. Subsequent runs are offline. Requires `espeak-ng` system-wide for phoneme conversion.
+- **ElevenLabs is optional** — only when `ELEVENLABS_API_KEY` is set and preferred. `scripts/edge-tts-fallback.py` remains available for draft voice iteration; avoid `*MultilingualNeural` voices (empty WordBoundary arrays).
 - **`-no-worktree` is required.** The workflow YAML pins `worktree.enabled: false` because video artifacts must land on the working branch — running in a worktree would dump them into a checkout that has to be merged back.
 - **Auto-resume across runs.** Re-invoking `archon workflow run create-archon-short` with the same topic resumes the prior failed run (skipping nodes via `prior_success`). To force a fresh run after editing the workflow, delete the prior run from `~/.archon/archon.db` (`remote_agent_workflow_runs` + `remote_agent_workflow_events` rows) — see Gotcha #2 in the prior `feat/archon-video-generic` branch's CLAUDE.md for the SQL.
 - **Windows bash startup overhead.** Anything tighter than ~30s for a bash node is fragile here — bash startup + jq spawn × 3 routinely takes >5s. The `parse-input` and `precheck` nodes are at 30s.

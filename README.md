@@ -83,7 +83,7 @@ curl -fsSL https://claude.ai/install.sh | bash
 irm https://claude.ai/install.ps1 | iex
 ```
 
-Then `claude /login` once to authenticate.
+Then `claude /login` once to authenticate with your **Claude Pro/Max subscription** (OAuth). Archon uses that session via `CLAUDE_USE_GLOBAL_AUTH=true` in `.archon/.env` — do **not** set `ANTHROPIC_API_KEY`.
 
 ### 2. Install Archon (binary, no setup wizard needed)
 
@@ -168,17 +168,22 @@ cd hyperframes-ai-video-generation
 cp .env.example .archon/.env
 ```
 
-Open `.archon/.env` and fill in the TTS settings for whichever engine you picked:
+Open `.archon/.env` and confirm:
 
-**For Kokoro (free, local):**
+- `CLAUDE_USE_GLOBAL_AUTH=true` (subscription OAuth — no Anthropic API key)
+- TTS settings for whichever engine you picked:
+
+**For Kokoro (free, local — default):**
 - `KOKORO_VOICE=af_heart` (or any voice from the [Kokoro voice catalog](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md))
 - `KOKORO_LANG_CODE=a` (`a`=American English, `b`=British, `j`=Japanese, etc.)
 - Speed defaults already shipped — see `.env.example`.
 
-**For ElevenLabs (paid, premium quality):**
+**For ElevenLabs (paid, premium quality — optional):**
 - `ELEVENLABS_API_KEY` — your key from [elevenlabs.io](https://elevenlabs.io)
 - `ELEVENLABS_VOICE_ID` — either your clone's ID or a preset (Brian `nPczCjzI2devNBz1zQrb` is the documented default)
 - The other 7 settings ship with the **tested-good defaults** for shorts (see "Voice tuning" below).
+
+**Cursor-only (no Claude Code / Archon):** skip `archon workflow run`. In Cursor chat, follow `.claude/skills/diy-yt-creator/new-<template>-short.md` and run `python scripts/kokoro-tts.py videos/<slug> --shorts` yourself. Same artifacts under `videos/<slug>/`.
 
 ### 5. Run it
 
@@ -309,7 +314,7 @@ The workflow generates narration via one of two TTS pipelines. Pick whichever fi
 | **[Kokoro](https://github.com/hexgrad/kokoro)** (default) | Free | High (MOS 4.5 on the [LMSYS Eval](https://huggingface.co/blog/leaderboard-tts)) | No (preset voices only) | `pip install kokoro` + espeak-ng | Anyone testing the workflow, no-budget creators, fully offline use |
 | **[ElevenLabs](https://elevenlabs.io)** | ~$5/M chars | Premium | Yes (Instant Voice Clone) | `pip install elevenlabs` + API key | Production channels, voice-cloned narration, max polish |
 
-**Which Python script runs:** the create-* workflows call whichever TTS script is paired with the playbook. By default the playbooks assume Kokoro. To switch to ElevenLabs, edit the playbook step 5 to call `python scripts/elevenlabs-tts.py …` instead of `python scripts/kokoro-tts.py …` — same flags, same output contract (`narration.wav` + `transcript.json` with the same word-timestamp shape).
+**Which Python script runs:** create-* commands default to Kokoro when `ELEVENLABS_API_KEY` is unset (or any `KOKORO_*` vars are set). To use ElevenLabs, set `ELEVENLABS_API_KEY` (and the other ElevenLabs vars) and confirm that engine with the agent — same flags, same output contract (`narration.wav` + `transcript.json` with the same word-timestamp shape).
 
 **Output is identical from the downstream pipeline's perspective.** Both scripts write a flat-array `transcript.json` keyed on `{word, start, end}`. `scripts/compute_timings.py`, `npx hyperframes lint`, and the GSAP timeline edits all work without modification.
 

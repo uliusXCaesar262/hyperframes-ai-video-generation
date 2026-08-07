@@ -1,5 +1,5 @@
 ---
-description: Spawn a previewable HyperFrames Short from templates/shorts/classic with research-grounded script + ElevenLabs TTS, paced to a target duration
+description: Spawn a previewable HyperFrames Short from templates/shorts/classic with research-grounded script + Kokoro TTS (ElevenLabs optional), paced to a target duration
 argument-hint: (no arguments — reads slug/topic/duration from $parse-input.output)
 ---
 
