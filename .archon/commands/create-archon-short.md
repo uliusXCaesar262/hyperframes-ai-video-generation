@@ -1,5 +1,5 @@
 ---
-description: Spawn a previewable HyperFrames Short from templates/shorts/archon with research-grounded script + ElevenLabs TTS, paced to a target duration
+description: Spawn a previewable HyperFrames Short from templates/shorts/archon with research-grounded script + Kokoro TTS (ElevenLabs optional), paced to a target duration
 argument-hint: (no arguments — reads slug/topic/duration from $parse-input.output)
 ---
 
@@ -132,7 +132,7 @@ parameter substitutions for THIS run are:
   `WebFetch` to read them. For JS-rendered pages you can't reach via
   `WebFetch`, ask the user for a source URL or for the facts verbatim.
 - **Pre-step (TTS pronunciation pass — MANDATORY before TTS).** Before
-  the TTS API call, the script you generated in step 4 MUST be audited
+  the TTS call, the script you generated in step 4 MUST be audited
   against three sources, in narrowest-wins order:
   1. **`templates/shorts/archon/PRONUNCIATION.md`** — Archon-specific
      token decisions (PIV / FIX / RVW / AI / PR / etc.). This file
@@ -148,63 +148,55 @@ parameter substitutions for THIS run are:
      pronunciation pitfalls" table (generic acronym + tech-term
      handling: `API` → `A P I`, `nginx` → `engine-x`, `npm` → `N P M`,
      etc.) — apply only if no narrower decision exists above.
-  **Also invoke the `text-to-speech` skill** (`.claude/skills/text-to-speech/`)
-  before issuing the TTS command — it carries the env-var conventions
-  and ElevenLabs-specific guidance the `elevenlabs-tts.py` script
-  depends on.
+
   Prepend the leading HTML comment from `PRONUNCIATION.md` (the
   "Required leading comment" section) to `videos/<slug>/script.txt`
   so future humans editing the script can see the decisions. The
-  TTS scripts strip these comments before the API call, so they don't
+  TTS scripts strip these comments before synthesis, so they don't
   affect generated audio.
 
-- Step 5 + 6 (TTS + transcript, single command) — **this workflow uses
-  ElevenLabs production voice** loaded from the user's `.env`
-  (`ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`, voice settings, and
-  `ELEVENLABS_SPEED_SHORTS` for the rate). Run:
+- Step 5 + 6 (TTS + transcript, single command) — **pick the TTS engine
+  based on what's configured in `.env`**:
+
+  **Default: Kokoro (free, local).** If the user has not configured
+  `ELEVENLABS_API_KEY`, OR has any `KOKORO_*` vars set, use Kokoro:
   ```bash
-  python scripts/elevenlabs-tts.py videos/$parse-input.output.slug --shorts
+  python scripts/kokoro-tts.py videos/$parse-input.output.slug --shorts
   ```
-  The script reads `videos/<slug>/script.txt`, writes
-  `videos/<slug>/audio/narration.wav` and
-  `videos/<slug>/transcript.json` (word-level timestamps from
-  ElevenLabs's `with-timestamps` endpoint). It uses chunked generation
-  with delta regen by default — per-chunk WAV + sync JSON land in
-  `videos/<slug>/audio/narration-chunks/`, and a SHA-256 of each
-  chunk's text is tracked in `transcript-history.json` so re-runs only
-  re-hit the API for changed chunks. **Do NOT run `npx hyperframes
-  tts` or `npx hyperframes transcribe`** — this single call replaces
-  both.
+  Apache-licensed, runs on CPU. No API key. First run downloads a ~325MB
+  model from Hugging Face. Native word-level timestamps come back inline.
+  **Do NOT run `npx hyperframes tts` or `npx hyperframes transcribe`** —
+  this single call replaces both.
 
-  The `--shorts` flag picks `ELEVENLABS_SPEED_SHORTS` (default 1.13)
-  over `ELEVENLABS_SPEED` (default 1.10), matching the faster cadence
-  the user prefers for vertical Shorts.
+  Optional env (loaded from `.env` and `.archon/.env`; all have sensible
+  defaults):
+  - `KOKORO_VOICE` (default `af_heart` — American female)
+  - `KOKORO_LANG_CODE` (default `a` — American English)
+  - `KOKORO_SPEED_SHORTS` (default `1.15`)
 
-  Required env (loaded from `.env` via `python-dotenv` — already
-  configured at both `.env` and `~/.archon/.env`):
-  - `ELEVENLABS_API_KEY`
-  - `ELEVENLABS_VOICE_ID`
-  - `ELEVENLABS_MODEL_ID` (e.g. `eleven_multilingual_v2`)
-  - Optional voice settings: `ELEVENLABS_STABILITY`,
-    `ELEVENLABS_SIMILARITY_BOOST`, `ELEVENLABS_STYLE`,
-    `ELEVENLABS_USE_SPEAKER_BOOST`
-  - Optional pronunciation dict: `ELEVENLABS_PRONUNCIATION_DICT_ID` +
-    `ELEVENLABS_PRONUNCIATION_DICT_VERSION_ID` (both required if used)
-
-  Fallback path — if the user explicitly asks for the draft voice
-  (e.g. ElevenLabs quota exhausted, faster iteration), use:
+  If `kokoro` or `soundfile` is missing, surface install:
   ```bash
-  python scripts/edge-tts-fallback.py videos/$parse-input.output.slug \
-    --voice en-US-AndrewNeural --rate +10%
+  pip install kokoro soundfile numpy
   ```
-  Avoid `*MultilingualNeural` voices in edge-tts — they emit empty
-  WordBoundary arrays and break the transcript step silently.
+  Also requires `espeak-ng` system-wide (one-time install per machine; see
+  the repo README's "Quick Start step 3" if it's missing).
 
-  If `elevenlabs` or `python-dotenv` is missing, surface the install
-  command to the user and stop:
+  **Alternative: ElevenLabs (paid, premium quality, voice cloning).** If
+  the user has `ELEVENLABS_API_KEY` configured and you've confirmed that
+  is their preferred engine, use:
   ```bash
-  pip install elevenlabs python-dotenv
+  python scripts/elevenlabs-tts.py videos/$parse-input.output.slug --shorts --no-chunk
   ```
+  Same output contract as Kokoro — writes `narration.wav` and a
+  same-shape `transcript.json`. Required env if you take this path:
+  `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID`, `ELEVENLABS_MODEL_ID`,
+  plus voice settings (`STABILITY`, `SIMILARITY_BOOST`, `STYLE`,
+  `USE_SPEAKER_BOOST`).
+
+  Either way the script reads `videos/<slug>/script.txt` and writes
+  `videos/<slug>/audio/narration.wav` plus `videos/<slug>/transcript.json`
+  with word-level timestamps — the downstream step (`compute_timings.py`)
+  is engine-agnostic.
 - Step 7 (compute phase boundaries) — read
   `videos/$parse-input.output.slug/transcript.json` and compute
   `phase{1,2,3,4}_end`, `total_duration`, `T1/T2/T3`, `P2/P3/P4`,

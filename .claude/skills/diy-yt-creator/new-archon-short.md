@@ -25,7 +25,7 @@ If the topic has no real source data and would require fabricated stats/dates, *
 A previewable HyperFrames project at `videos/<slug>/` with:
 
 - `script.txt` — narration script
-- `audio/narration.wav` — ElevenLabs TTS narration (single-call mode, MP3 fetched then decoded to WAV via ffmpeg)
+- `audio/narration.wav` — Kokoro TTS narration by default (ElevenLabs optional); both write WAV + word-level `transcript.json`
 - `transcript.json` — word-level timestamps
 - `index.html` — composition filled with real content, transitions sync'd to spoken-word frames
 - Preview studio open in the browser at the URL printed by `hyperframes preview`
